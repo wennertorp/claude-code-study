@@ -159,7 +159,7 @@ export function ResourcesSection() {
           <span className="text-sm text-slate-400">Claude Code som parprogrammerare</span>
         </div>
         <div className="text-xs text-slate-600">
-          Material framtaget av Carl Wennertorp · Anthropic 2025
+          Material framtaget av Carl Wennertorp
         </div>
       </div>
     </SectionWrapper>
