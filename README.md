@@ -59,23 +59,87 @@ Fullständig labbguide finns i `demo-bug-app/README.md`.
 
 ## Publicering
 
-### GitHub Pages
+### GitHub Pages med GitHub Actions
 
-```bash
-npm install --save-dev gh-pages
+Sidan publiceras automatiskt vid push till `main` via en Actions-workflow.
+
+**1. Sätt `base` i `vite.config.ts`**
+
+Vite behöver veta att appen serveras under en subpath:
+
+```ts
+// vite.config.ts
+export default defineConfig({
+  base: '/repo-namn/',   // ersätt med ditt faktiska repo-namn
+  // ...
+})
 ```
 
-Lägg till i `package.json`:
-```json
-"homepage": "https://[ditt-användarnamn].github.io/[repo-namn]",
-"scripts": {
-  "deploy": "npm run build && gh-pages -d dist"
-}
+Hoppa över detta om repot heter `[användarnamn].github.io` — då serveras det från roten.
+
+**2. Skapa workflow-filen**
+
+Skapa `.github/workflows/deploy.yml`:
+
+```yaml
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment
 ```
 
-```bash
-npm run deploy
-```
+**3. Aktivera GitHub Pages i repo-inställningarna**
+
+Gå till **Settings → Pages → Source** och välj **GitHub Actions**.
+
+Efter nästa push till `main` publiceras sidan automatiskt på:
+`https://[användarnamn].github.io/[repo-namn]/`
+
+---
+
+> **Versionshanterat innehåll**
+> `node_modules/` och `dist/` ska inte committas — lägg till dem i `.gitignore` om de saknas:
+> ```
+> node_modules/
+> dist/
+> ```
+
+---
 
 ### Netlify
 
